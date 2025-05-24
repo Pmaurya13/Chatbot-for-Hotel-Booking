@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Sunshine Booking Chatbot</title>
+    <style>
+        /* Reset default styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Chat container */
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+
+        /* Chat header */
+        .chat-header {
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        /* Chat messages area */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+
+        /* Message styling */
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        /* User message */
+        .message.user {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+
+        /* Bot message */
+        .message.bot {
+            background-color: #e9ecef;
+            color: black;
+            margin-right: auto;
+        }
+
+        /* Chat input area */
+        .chat-input {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        /* Input field */
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        /* Send button */
+        .chat-input button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .chat-input button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Hotel Sunshine Booking Assistant</h2>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be dynamically added here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your response here...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Room data similar to Python script
+        const ROOMS = {
+            single: { total: 10, booked: 2, price: 100 },
+            double: { total: 8, booked: 3, price: 150 },
+            suite: { total: 5, booked: 1, price: 250 }
+        };
+
+        // Chatbot state
+        let state = 'greeting';
+        let userName = '';
+        let bookingDetails = {};
+
+        // DOM elements
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+
+        // Add message to chat
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Handle user input
+        function sendMessage() {
+            const input = userInput.value.trim();
+            if (input === '') return;
+
+            addMessage(input, 'user');
+            userInput.value = '';
+
+            processInput(input);
+        }
+
+        // Process user input based on current state
+        function processInput(input) {
+            switch (state) {
+                case 'greeting':
+                    addMessage('Hello! Welcome to Hotel Sunshine Booking Assistant. May I know your name?', 'bot');
+                    state = 'getName';
+                    break;
+                case 'getName':
+                    userName = input;
+                    addMessage(`Nice to meet you, ${userName}! Let's proceed with your booking.`, 'bot');
+                    displayRoomOptions();
+                    state = 'getRoomType';
+                    break;
+                case 'getRoomType':
+                    bookingDetails.roomType = input.toLowerCase();
+                    if (!ROOMS[bookingDetails.roomType]) {
+                        addMessage('Sorry, invalid room type. Please choose Single, Double, or Suite.', 'bot');
+                        return;
+                    }
+                    addMessage('How many rooms would you like to book?', 'bot');
+                    state = 'getNumRooms';
+                    break;
+                case 'getNumRooms':
+                    bookingDetails.numRooms = parseInt(input);
+                    const available = ROOMS[bookingDetails.roomType].total - ROOMS[bookingDetails.roomType].booked;
+                    if (available < bookingDetails.numRooms) {
+                        addMessage(`Sorry, only ${available} ${bookingDetails.roomType} rooms are available. Would you like to try a different room type or number? (yes/no)`, 'bot');
+                        state = 'retryAvailability';
+                        return;
+                    }
+                    addMessage('Check-in date (YYYY-MM-DD):', 'bot');
+                    state = 'getCheckIn';
+                    break;
+                case 'retryAvailability':
+                    if (input.toLowerCase() === 'yes') {
+                        displayRoomOptions();
+                        state = 'getRoomType';
+                    } else {
+                        addMessage('Thank you for visiting Hotel Sunshine. Goodbye!', 'bot');
+                        state = 'end';
+                    }
+                    break;
+                case 'getCheckIn':
+                    bookingDetails.checkIn = input;
+                    addMessage('Check-out date (YYYY-MM-DD):', 'bot');
+                    state = 'getCheckOut';
+                    break;
+                case 'getCheckOut':
+                    bookingDetails.checkOut = input;
+                    calculateAndConfirm();
+                    state = 'confirmBooking';
+                    break;
+                case 'confirmBooking':
+                    if (input.toLowerCase() === 'yes') {
+                        ROOMS[bookingDetails.roomType].booked += bookingDetails.numRooms;
+                        const bookingId = `BK${Math.floor(Math.random() * 9000) + 1000}`;
+                        addMessage(`Booking confirmed! Your Booking ID is ${bookingId}. Thank you for choosing Hotel Sunshine.`, 'bot');
+                    } else {
+                        addMessage('Booking cancelled. Thank you for considering Hotel Sunshine.', 'bot');
+                    }
+                    addMessage('Would you like to make another booking? (yes/no)', 'bot');
+                    state = 'anotherBooking';
+                    break;
+                case 'anotherBooking':
+                    if (input.toLowerCase() === 'yes') {
+                        bookingDetails = {};
+                        displayRoomOptions();
+                        state = 'getRoomType';
+                    } else {
+                        addMessage('Thank you for using Hotel Sunshine Booking Assistant. Goodbye!', 'bot');
+                        state = 'end';
+                    }
+                    break;
+            }
+        }
+
+        // Display room options
+        function displayRoomOptions() {
+            let message = 'We have the following room types available:\n';
+            for (const [roomType, details] of Object.entries(ROOMS)) {
+                const available = details.total - details.booked;
+                message += `- ${roomType.charAt(0).toUpperCase() + roomType.slice(1)} Room: $${details.price} per night (Available: ${available})\n`;
+            }
+            message += 'Which room type would you like to book? (Single/Double/Suite)';
+            addMessage(message, 'bot');
+        }
+
+        // Calculate cost and show booking summary
+        function calculateAndConfirm() {
+            const checkInDate = new Date(bookingDetails.checkIn);
+            const checkOutDate = new Date(bookingDetails.checkOut);
+            const numNights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+            const costPerNight = ROOMS[bookingDetails.roomType].price;
+            const totalCost = costPerNight * bookingDetails.numRooms * numNights;
+
+            let summary = `Dear ${userName}, here are your booking details:\n`;
+            summary += `Room Type: ${bookingDetails.roomType.charAt(0).toUpperCase() + bookingDetails.roomType.slice(1)}\n`;
+            summary += `Number of Rooms: ${bookingDetails.numRooms}\n`;
+            summary += `Check-in Date: ${bookingDetails.checkIn}\n`;
+            summary += `Check-out Date: ${bookingDetails.checkOut}\n`;
+            summary += `Total Cost: $${totalCost}\n`;
+            summary += 'Do you want to confirm this booking? (yes/no)';
+            addMessage(summary, 'bot');
+        }
+
+        // Initial greeting
+        addMessage('Hello! Welcome to Hotel Sunshine Booking Assistant. May I know your name?', 'bot');
+
+        // Enable sending message on Enter key
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
