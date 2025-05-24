@@ -1,2 +1,2 @@
 # Chatbot-for-Hotel-Booking
-An online chatbot for hotel booking is a virtual assistant designed to help users find and reserve hotel accommodations quickly and conveniently. 
+An online chatbot for hotel booking is a virtual assistant designed to help users find and reserve hotel accommodations quickly and conveniently. Available 24/7, the chatbot can assist with searching for hotels based on location, dates, price range, and preferences. It provides instant responses to inquiries, suggests available rooms, and guides users through the booking process
